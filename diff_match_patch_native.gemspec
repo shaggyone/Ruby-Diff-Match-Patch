@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name    = "diff_match_patch_native"
-  s.version = "2.0.0-rc1"
+  s.version = "2.0.0"
   s.author  = "Elliot Laster"
   s.email       = "elliotlaster@gmail.com"
   s.homepage    = "https://github.com/elliotlaster/Ruby-Diff-Match-Patch"
