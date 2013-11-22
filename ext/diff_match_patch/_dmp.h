@@ -3,7 +3,7 @@
 
 #ifdef __cplusplus
 #include <string>
-#include "diff_match_patch-stl/diff_match_patch.h"
+#include "diff-match-patch-cpp-stl/diff_match_patch.h"
 #endif
 
 #include <ruby.h>

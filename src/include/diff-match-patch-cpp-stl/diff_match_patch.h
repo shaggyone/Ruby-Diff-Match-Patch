@@ -26,9 +26,11 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <string>
 #include <vector>
+#include <cstdlib>
+#include <cwchar>
 #include <time.h>
-
 
 /*
  * Functions for diff, match and patch.
@@ -37,12 +39,12 @@
  *
  * @author fraser@google.com (Neil Fraser)
  *
- * Qt/C++ port by mikeslemmer@gmail.com (Mike Slemmer):
+ * Qt/C++ port by mikeslemmer@gmail.com (Mike Slemmer)
  *
  * STL-only port by snhere@gmail.com (Sergey Nozhenko)
+ * and some tweaks for std::string by leutloff@sundancer.oche.de (Christian Leutloff)
  *
- * Here is a trivial sample program which works properly when linked with this
- * library:
+ * Here is a trivial sample program:
  *
 
  #include "diff_match_patch.h"
@@ -50,8 +52,8 @@
  using namespace std;
  int main(int argc, char **argv) {
    diff_match_patch<wstring> dmp;
-   wstring str1 = L"First string in diff");
-   wstring str2 = L"Second string in diff");
+   wstring str1 = L"First string in diff";
+   wstring str2 = L"Second string in diff";
 
    wstring strPatch = dmp.patch_toText(dmp.patch_make(str1, str2));
    pair<wstring, vector<bool> > out
@@ -138,7 +140,7 @@ class diff_match_patch {
         case DELETE:
           return traits::cs(L"DELETE");
         case EQUAL:
-          return traits::cs(L"EQUAL");
+          return traits::cs(L"EQUAtraits::cs(L");
       }
       throw string_t(traits::cs(L"Invalid operation."));
     }
@@ -1071,8 +1073,8 @@ class diff_match_patch {
         if (is_control(*p1) || is_control(*p2)) {
           score++;
           // Four points for blank lines.
-          if (traits::to_wchar(*p1) == L'\n' && p1 != one.c_str() && (traits::to_wchar(*(p1 - 1)) == L'\n'
-               || traits::to_wchar(*(p1 - 1)) == L'\r' && p1 - 1 != one.c_str() && traits::to_wchar(*(p1 - 2)) == L'\n')) {
+          if (((traits::to_wchar(*p1) == L'\n') && (p1 != one.c_str()) && (traits::to_wchar(*(p1 - 1)) == L'\n'))
+               || ((traits::to_wchar(*(p1 - 1)) == L'\r') && (p1 - 1 != one.c_str()) && (traits::to_wchar(*(p1 - 2)) == L'\n'))) {
             score++;
           }
           else {
@@ -1662,7 +1664,7 @@ class diff_match_patch {
           rd[j] = ((rd[j + 1] << 1) | 1) & charMatch;
         } else {
           // Subsequent passes: fuzzy match.
-          rd[j] = ((rd[j + 1] << 1) | 1) & charMatch
+          rd[j] = (((rd[j + 1] << 1) | 1) & charMatch)
               | (((last_rd[j + 1] | last_rd[j]) << 1) | 1)
               | last_rd[j + 1];
         }
@@ -1674,7 +1676,7 @@ class diff_match_patch {
             // Told you so.
             score_threshold = score;
             best_loc = j - 1;
-            if ((int)best_loc > loc) {
+            if (best_loc > loc) {
               // When passing loc, don't exceed our current distance from loc.
               start = std::max(1, 2 * loc - (int)best_loc);
             } else {
@@ -2230,7 +2232,7 @@ class diff_match_patch {
             if (l > 0 && traits::to_wchar(*t) == L',') ++t, --l;
             while (l > 0 && traits::is_digit(*t)) --l, length1 += *t++;
             if (l > 0 && traits::to_wchar(*t++) == L' ' && traits::to_wchar(*t++) == L'+' && traits::is_digit(*t)) {
-              do { start2 += *t; } while (--l >= 0 && traits::is_digit(*++t));
+              do { start2 += *t; --l; } while (traits::is_digit(*++t));
               if (l > 0 && traits::to_wchar(*t) == L',') ++t, --l;
               while (l > 0 && traits::is_digit(*t)) --l, length2 += *t++;
               if (l == 0 && traits::to_wchar(*t++) == L' ' && traits::to_wchar(*t++) == L'@' && traits::to_wchar(*t) == L'@') break; // Success
@@ -2306,7 +2308,7 @@ class diff_match_patch {
    */
  private:
   static inline string_t safeMid(const string_t &str, int pos) {
-    return ((size_t)pos == str.length()) ? string_t() : str.substr(pos);
+    return (pos == str.length()) ? string_t() : str.substr(pos);
   }
 
   /**
@@ -2319,7 +2321,7 @@ class diff_match_patch {
    */
  private:
   static inline string_t safeMid(const string_t &str, int pos, int len) {
-    return ((size_t)pos == str.length()) ? string_t() : str.substr(pos, len);
+    return (pos == str.length()) ? string_t() : str.substr(pos, len);
   }
 
   /**
@@ -2357,7 +2359,7 @@ class diff_match_patch {
     for (i = 0; i < 0x100; ++i) safe[i] = 0;
     for (i = 0; i < sizeof(safe_chars) / sizeof(wchar_t); ++i) safe[safe_chars[i]] = i + 1;
 
-    size_t n = 0;
+    int n = 0;
     typename traits::utf32_t u;
     typename string_t::const_pointer c = s2.c_str(), end = c + s2.length();
     while (c != end) {
@@ -2526,12 +2528,14 @@ template <> struct diff_match_patch_traits<wchar_t> : diff_match_patch_utf32_fro
   static wchar_t from_wchar(wchar_t c) { return c; }
   static wchar_t to_wchar(wchar_t c) { return c; }
   static const wchar_t* cs(const wchar_t* s) { return s; }
+  static const wchar_t eol = L'\n';
+  static const wchar_t tab = L'\t';
 };
-
 
 // Possible specialization of the traits for char
 #include <cctype>
-template <> struct diff_match_patch_traits<char> : diff_match_patch_utf32_direct<char> {
+template <> struct diff_match_patch_traits<char> : diff_match_patch_utf32_direct<char>
+{
   static bool is_alnum(char c) { return std::isalnum(c)? true : false; }
   static bool is_digit(char c) { return std::isdigit(c)? true : false; }
   static bool is_space(char c) { return std::isspace(c)? true : false; }
@@ -2539,6 +2543,8 @@ template <> struct diff_match_patch_traits<char> : diff_match_patch_utf32_direct
   static char from_wchar(wchar_t c) { return static_cast<char>(c); }
   static wchar_t to_wchar(char c) { return static_cast<wchar_t>(c); }
   static std::string cs(const wchar_t* s) { return std::string(s, s + wcslen(s)); }
+  static const char eol = '\n';
+  static const char tab = '\t';
 };
 
 
